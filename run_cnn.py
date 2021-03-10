@@ -9,17 +9,23 @@ import time
 from datetime import timedelta
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from sklearn import metrics
 
 from cnn_model import TCNNConfig, TextCNN
 from data.cnews_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 
 base_dir = 'data/cnews'
+#os.path.join()函数的作用是将各个路径进行拼接操作
 train_dir = os.path.join(base_dir, 'cnews.train.txt')
 test_dir = os.path.join(base_dir, 'cnews.test.txt')
 val_dir = os.path.join(base_dir, 'cnews.val.txt')
 vocab_dir = os.path.join(base_dir, 'cnews.vocab.txt')
+#打印路径
+print('train_dir', train_dir)
+print('test_dir', test_dir)
+print('val_dir', val_dir)
+print('vocab_dir', vocab_dir)
 
 save_dir = 'checkpoints/textcnn'
 save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
@@ -101,15 +107,16 @@ def train():
         for x_batch, y_batch in batch_train:
             feed_dict = feed_data(x_batch, y_batch, config.dropout_keep_prob)
 
-            if total_batch % config.save_per_batch == 0:
-                # 每多少轮次将训练结果写入tensorboard scalar
-                s = session.run(merged_summary, feed_dict=feed_dict)
-                writer.add_summary(s, total_batch)
+            # if total_batch % config.save_per_batch == 0:
+            #     # 每多少轮次将训练结果写入tensorboard scalar 进行可视化处理
+            #     s = session.run(merged_summary, feed_dict=feed_dict)
+            #     writer.add_summary(s, total_batch)
 
             if total_batch % config.print_per_batch == 0:
                 # 每多少轮次输出在训练集和验证集上的性能
                 feed_dict[model.keep_prob] = 1.0
                 loss_train, acc_train = session.run([model.loss, model.acc], feed_dict=feed_dict)
+                # loss_train, _ = session.run([model.loss, model.acc], feed_dict=feed_dict)
                 loss_val, acc_val = evaluate(session, x_val, y_val)  # todo
 
                 if acc_val > best_acc_val:
@@ -137,6 +144,7 @@ def train():
                 break  # 跳出循环
         if flag:  # 同上
             break
+    return 0
 
 
 def test():
@@ -183,19 +191,19 @@ def test():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
-        raise ValueError("""usage: python run_cnn.py [train / test]""")
+    # if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
+    #     raise ValueError("""usage: python run_cnn.py [train / test]""")
 
     print('Configuring CNN model...')
     config = TCNNConfig()
     if not os.path.exists(vocab_dir):  # 如果不存在词汇表，重建
         build_vocab(train_dir, vocab_dir, config.vocab_size)
+
     categories, cat_to_id = read_category()
-    words, word_to_id = read_vocab(vocab_dir)
+    words, word_to_id = read_vocab(vocab_dir)   #字、字对应的id号
     config.vocab_size = len(words)
     model = TextCNN(config)
 
-    if sys.argv[1] == 'train':
-        train()
-    else:
-        test()
+    train()
+    test()
+
