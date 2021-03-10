@@ -1,14 +1,13 @@
 # coding: utf-8
 
 from __future__ import print_function
-
+import tensorflow.compat.v1 as tf
 import os
 import sys
 import time
 from datetime import timedelta
 
 import numpy as np
-import tensorflow as tf
 from sklearn import metrics
 
 from rnn_model import TRNNConfig, TextRNN
@@ -182,8 +181,8 @@ def test():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
-        raise ValueError("""usage: python run_rnn.py [train / test]""")
+    # if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
+        # raise ValueError("""usage: python run_rnn.py [train / test]""")
 
     print('Configuring RNN model...')
     config = TRNNConfig()
@@ -194,7 +193,9 @@ if __name__ == '__main__':
     config.vocab_size = len(words)
     model = TextRNN(config)
 
-    if sys.argv[1] == 'train':
-        train()
-    else:
-        test()
+    train()
+    test()
+    # if sys.argv[1] == 'train':
+    #     train()
+    # else:
+    #     test()
