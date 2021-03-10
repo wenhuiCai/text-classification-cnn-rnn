@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 class TRNNConfig(object):
     """RNN配置参数"""
@@ -42,17 +43,17 @@ class TextRNN(object):
         """rnn模型"""
 
         def lstm_cell():   # lstm核
-            return tf.contrib.rnn.BasicLSTMCell(self.config.hidden_dim, state_is_tuple=True)
+            return tf.nn.rnn_cell.BasicLSTMCell(self.config.hidden_dim, state_is_tuple=True)
 
         def gru_cell():  # gru核
-            return tf.contrib.rnn.GRUCell(self.config.hidden_dim)
+            return tf.nn.rnn_cell.GRUCell(self.config.hidden_dim)
 
         def dropout(): # 为每一个rnn核后面加一个dropout层
             if (self.config.rnn == 'lstm'):
                 cell = lstm_cell()
             else:
                 cell = gru_cell()
-            return tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.keep_prob)
+            return tf.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=self.keep_prob)
 
         # 词向量映射
         with tf.device('/cpu:0'):
@@ -62,7 +63,7 @@ class TextRNN(object):
         with tf.name_scope("rnn"):
             # 多层rnn网络
             cells = [dropout() for _ in range(self.config.num_layers)]
-            rnn_cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
+            rnn_cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
 
             _outputs, _ = tf.nn.dynamic_rnn(cell=rnn_cell, inputs=embedding_inputs, dtype=tf.float32)
             last = _outputs[:, -1, :]  # 取最后一个时序输出作为结果
@@ -70,7 +71,7 @@ class TextRNN(object):
         with tf.name_scope("score"):
             # 全连接层，后面接dropout以及relu激活
             fc = tf.layers.dense(last, self.config.hidden_dim, name='fc1')
-            fc = tf.contrib.layers.dropout(fc, self.keep_prob)
+            fc = tf.layers.dropout(fc, self.keep_prob)
             fc = tf.nn.relu(fc)
 
             # 分类器
